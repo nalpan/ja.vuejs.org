@@ -1,32 +1,32 @@
-# テンプレート構文
+# Template Syntax
 
-Vue.js では HTML ベースのテンプレート構文を使っているので、Vue インスタンスのデータと描画された DOM を宣言的に対応させることができます。全ての Vue.js テンプレートは、仕様に準拠しているブラウザや HTML パーサによってパースできる有効な HTML です。
+Vue.js uses an HTML-based template syntax that allows you to declaratively bind the rendered DOM to the underlying application instance's data. All Vue.js templates are valid HTML that can be parsed by spec-compliant browsers and HTML parsers.
 
-内部では、Vue はテンプレートを Virtual DOM の描画関数にコンパイルします。リアクティブシステムと組み合わせて、Vue は再描画に必要なコンポーネントをインテリジェントに把握でき、アプリケーションの状態が変わった時に最低限の DOM 操作を適用します
+Under the hood, Vue compiles the templates into Virtual DOM render functions. Combined with the reactivity system, Vue is able to intelligently figure out the minimal number of components to re-render and apply the minimal amount of DOM manipulations when the app state changes.
 
-もし、あなたが Virtual DOM の概要に詳しく、JavaScript で直接描画するのを好む場合、テンプレートの代わりに[直接 render 関数で書く](render-function.html)ことも可能で、オプションで JSX をサポートしています。
+If you are familiar with Virtual DOM concepts and prefer the raw power of JavaScript, you can also [directly write render functions](render-function.html) instead of templates, with optional JSX support.
 
-## 展開
+## Interpolations
 
-### テキスト
+### Text
 
-データバインディングのもっとも基本的な形は、”Mustache” 構文(二重中括弧)を利用したテキスト展開です:
+The most basic form of data binding is text interpolation using the "Mustache" syntax (double curly braces):
 
 ```html
 <span>Message: {{ msg }}</span>
 ```
 
-mustache タグは、対応するオブジェクトの `msg` プロパティの値に置き換えられます。また、`msg` プロパティが変更される時、それに応じて更新されます。
+The mustache tag will be replaced with the value of the `msg` property on the corresponding data object. It will also be updated whenever the data object's `msg` property changes.
 
-[v-once ディレクティブ](../api/directives.html#v-once)を使用することで、データ変更時の更新はおこなわず、一度だけ展開することができます。ただし、同じノードのあらゆる他のバインディングが影響を受けることに注意してください:
+You can also perform one-time interpolations that do not update on data change by using the [v-once directive](../api/directives.html#v-once), but keep in mind this will also affect any other bindings on the same node:
 
 ```html
 <span v-once>This will never change: {{ msg }}</span>
 ```
 
-### 生の HTML
+### Raw HTML
 
-2重中括弧の mustaches は、データを HTML ではなく、プレーンなテキストとして扱います。実際の HTML として出力するためには、[`v-html` ディレクティブ](../api/directives.html#v-html)を使用する必要があります:
+The double mustaches interprets the data as plain text, not HTML. In order to output real HTML, you will need to use the [`v-html` directive](../api/directives.html#v-html):
 
 ```html
 <p>Using mustaches: {{ rawHtml }}</p>
@@ -40,62 +40,58 @@ mustache タグは、対応するオブジェクトの `msg` プロパティの�
 </p>
 <script async src="https://static.codepen.io/assets/embed/ei.js"></script>
 
-この `span` のコンテンツは `rawHtml` プロパティの値に置き換えられ、プレーンな HTML として解釈されます。Vue は、文字列ベースのテンプレートエンジンではないので、`v-html` をテンプレート部品を構成して使用できないことに注意しましょう。代わりに、 UI の再利用や組み合わせのための基礎として、コンポーネントを利用することが好ましいです。
+The contents of the `span` will be replaced with the value of the `rawHtml` property, interpreted as plain HTML - data bindings are ignored. Note that you cannot use `v-html` to compose template partials, because Vue is not a string-based templating engine. Instead, components are preferred as the fundamental unit for UI reuse and composition.
 
 ::: tip
-[XSS 脆弱性](https://en.wikipedia.org/wiki/Cross-site_scripting)を容易に引き起こすので、ウェブサイトで動的に任意の HTML を描画することは、非常に危険です。信頼できるコンテンツにだけ HTML 展開を利用してください。ユーザーから提供されたコンテンツに対しては**決して**使用してはいけません。
+Dynamically rendering arbitrary HTML on your website can be very dangerous because it can easily lead to [XSS vulnerabilities](https://en.wikipedia.org/wiki/Cross-site_scripting). Only use HTML interpolation on trusted content and **never** on user-provided content
 :::
 
-### 属性
+### Attributes
 
-Mustache は、HTML 属性の内部で使用することはできません。代わりに、[`v-bind` ディレクティブ](../api/#v-bind)を使用してください:
+Mustaches cannot be used inside HTML attributes. Instead, use a [`v-bind` directive](../api/#v-bind):
 
 ```html
 <div v-bind:id="dynamicId"></div>
 ```
 
-属性が単に存在していることを `true` と示すといった真偽値属性の場合、`v-bind` は少し異なった働きをします。この例では:
+In the case of boolean attributes, where their mere existence implies `true`, `v-bind` works a little differently. In this example:
 
 ```html
 <button v-bind:disabled="isButtonDisabled">Button</button>
 ```
 
-#### TODO false確認
-`isButtonDisabled` が `null` 、`undefined` 、または `false` の値を持つ場合、`disabled` 属性は描画された `<button>` 要素に含められません。
+If `isButtonDisabled` has the value of `null` or `undefined`, the `disabled` attribute will not even be included in the rendered `<button>` element.
 
-### JavaScript 式の使用
+### Using JavaScript Expressions
 
-これまで、テンプレートに単純なキーをバインディングしてきました。実際には Vue.js は全てのデータバインディング内部で JavaScript 式を完全にサポートします:
+So far we've only been binding to simple property keys in our templates. But Vue.js actually supports the full power of JavaScript expressions inside all data bindings:
 
 ```html
-{{ number + 1 }}
-
-{{ ok ? 'YES' : 'NO' }}
-
-{{ message.split('').reverse().join('')}}
+{{ number + 1 }} {{ ok ? 'YES' : 'NO' }} {{ message.split('').reverse().join('')
+}}
 
 <div v-bind:id="'list-' + id"></div>
 ```
 
-これらの式は、Vue インスタンスが所有するデータスコープ内で JavaScript として評価されます。制限として、それぞれのバインディングは、**単一の式**だけ含むことができるというものです。なので、以下は動作**しません**:
+These expressions will be evaluated as JavaScript in the data scope of the current active instance. One restriction is that each binding can only contain **one single expression**, so the following will **NOT** work:
 
 ```html
-<!-- これは文であり、式ではありません: -->
+<!-- this is a statement, not an expression: -->
 {{ var a = 1 }}
 
-<!-- フロー制御はいずれも動作しません。三項演算子を使用してください。 -->
+<!-- flow control won't work either, use ternary expressions -->
 {{ if (ok) { return message } }}
 ```
 
-## ディレクティブ
+## Directives
 
-ディレクティブは `v-` から始まる特別な属性です。ディレクティブ属性値は、**単一の JavaScript 式**を期待します(ただし、`v-for` と `v-on` は例外で、これについては後から説明します)。ディレクティブの仕事は、属性値の式が変化したときに、リアクティブに副作用を DOM に適用することです。イントロダクションで見た例を振り返ってみましょう:
+Directives are special attributes with the `v-` prefix. Directive attribute values are expected to be **a single JavaScript expression** (with the exception of `v-for` and `v-on`, which will be discussed later). A directive's job is to reactively apply side effects to the DOM when the value of its expression changes. Let's review the example we saw in the introduction:
 
 ```html
 <p v-if="seen">Now you see me</p>
 ```
 
-ここでの `v-if` ディレクティブは `seen` 式の値が真か否かに基づいて、`<p>` 要素を削除/挿入します。
+Here, the `v-if` directive would remove/insert the `<p>` element based on the truthiness of the value of the expression `seen`.
 
 ### Arguments
 
@@ -181,13 +177,13 @@ They may look a bit different from normal HTML, but `:` and `@` are valid charac
 
 > From the next page on, we'll use the shorthand in our examples, as that's the most common usage for Vue developers.
 
-### 注意事項
+### Caveats
 
-#### 動的引数の値の制約
+#### Dynamic Argument Value Constraints
 
 Dynamic arguments are expected to evaluate to a string, with the exception of `null`. The special value `null` can be used to explicitly remove the binding. Any other non-string value will trigger a warning.
 
-#### 動的引数の式の制約
+#### Dynamic Argument Expression Constraints
 
 Dynamic argument expressions have some syntax constraints because certain characters, such as spaces and quotes, are invalid inside HTML attribute names. For example, the following is invalid:
 

@@ -12,6 +12,7 @@ const sidebar = {
         '/guide/introduction',
         '/guide/instance',
         '/guide/template-syntax',
+        '/guide/template-syntax-orig',
         '/guide/computed',
         '/guide/class-and-style',
         '/guide/conditional',
